@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "tsqr.h"
 
 // LAPACK: QR factorization based householder to general matrix
@@ -176,45 +177,79 @@ static double verify(double *A, int m, int n, double *R)
     return sqrt(err);
 }
 
-// verify correctness
 int main(void)
 {
-    int m = 40;  
-    int n = 5;   
+    // Scale with respect to m (fix n = 5)
+    int n_fixed = 5;
+    int m_values[] = {40, 80, 160, 320, 640, 1280, 2560};
+    int num_m = 7;
 
-    printf("TSQR Test: %d x %d matrix\n", m, n);
-    printf("Block size: %d rows per processor\n", m / 4);
+    FILE *fm = fopen("scale_m.csv", "w");
+    fprintf(fm, "m,n,time\n");
 
-    // Fill A column-major with deterministic values 
-    double *A = (double *)malloc(m * n * sizeof(double));
-    for (int j = 0; j < n; j++) {
-        for (int i = 0; i < m; i++) {
-        A[i + j * m] = sin((double)(i + 1) * (double)(j + 1) * 0.3);
-    }
-}
+    for (int t = 0; t < num_m; t++) {
+        int m = m_values[t];
+        int n = n_fixed;
 
-    // Run TSQR 
-    double *R = (double *)malloc(n * n * sizeof(double));
-    TSQR(A, m, n, R);
+        // Build random matrix
+        double *A = (double *)malloc(m * n * sizeof(double));
+        for (int j = 0; j < n; j++)
+            for (int i = 0; i < m; i++)
+                A[i + j * m] = sin((double)(i + 1) * (double)(j + 1) * 0.3);
 
-    printf("\n Final R (= R_02) \n");
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("%10.4f ", R[i + j * n]);
+        double *R = (double *)malloc(n * n * sizeof(double));
+
+        // Time TSQR 
+        int repeats = 10;
+        clock_t start = clock();
+        for (int r = 0; r < repeats; r++) {
+            TSQR(A, m, n, R);
         }
-        printf("\n");
-    }
+        clock_t end = clock();
+        double elapsed = (double)(end - start) / CLOCKS_PER_SEC / repeats;
 
-    // Verify
-    double err = verify(A, m, n, R);
-    printf("||A^T A - R^T R||_F = %.2e  (should be ~0)\n", err);
-    if (err < 1e-10) {
-        printf("Pass\n");
-    } else {
-        printf("Warning: TSQR may have errors\n");
-    }
+        fprintf(fm, "%d,%d,%.6f\n", m, n, elapsed);
+        printf("m=%d, n=%d, time=%.6f s\n", m, n, elapsed);
 
-    free(A);
-    free(R);
+        free(A);
+        free(R);
+    }
+    fclose(fm);
+
+    // Scale with respect to n (fix m = 400) 
+    int m_fixed = 400;
+    int n_values[] = {5, 10, 20, 40, 80, 100};
+    int num_n = 6;
+
+    FILE *fn = fopen("scale_n.csv", "w");
+    fprintf(fn, "m,n,time\n");
+
+    for (int t = 0; t < num_n; t++) {
+        int m = m_fixed;
+        int n = n_values[t];
+
+        double *A = (double *)malloc(m * n * sizeof(double));
+        for (int j = 0; j < n; j++)
+            for (int i = 0; i < m; i++)
+                A[i + j * m] = sin((double)(i + 1) * (double)(j + 1) * 0.3);
+
+        double *R = (double *)malloc(n * n * sizeof(double));
+        
+        int repeats = 10;
+        clock_t start = clock();
+        for (int r = 0; r < repeats; r++) {
+            TSQR(A, m, n, R);
+        }
+        clock_t end = clock();
+        double elapsed = (double)(end - start) / CLOCKS_PER_SEC / repeats;
+
+        fprintf(fn, "%d,%d,%.6f\n", m, n, elapsed);
+        printf("m=%d, n=%d, time=%.6f s\n", m, n, elapsed);
+
+        free(A);
+        free(R);
+    }
+    fclose(fn);
+
     return 0;
 }
