@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/niuxinyue/Ass1-CAQR/tsqr_c",
+      "program": "/Users/niuxinyue/Ass1-CAQR/tsqr_c/build/Debug/outDebug"
+    }
+  ]
+}

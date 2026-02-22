@@ -1,0 +1,5 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/niuxinyue/Ass1-CAQR/tsqr_c'
+gcc -O2 -Wall -o tsqr tsqr.c -framework Accelerate
+make: Leaving directory `/Users/niuxinyue/Ass1-CAQR/tsqr_c'
+ 
