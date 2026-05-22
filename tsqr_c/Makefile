@@ -1,6 +1,6 @@
 CC     = gcc
 CFLAGS = -O2 -Wall
-LIBS   = -framework Accelerate
+LIBS   = -llapack -lblas
 
 TARGET = tsqr
 SRCS   = tsqr.c
